@@ -84,8 +84,8 @@ void setup() {
 
   xTaskCreate(handshake, (const portCHAR *) "HS", 128, NULL , 4, NULL);
   xTaskCreate(readSensor, (const portCHAR *) "RS", 128, NULL , 3, NULL);
-//  xTaskCreate(readPower, (const portCHAR *) "Read power consumption values", 128, NULL , 2, NULL);
-//  xTaskCreate(listenForReq,  (const portCHAR *)"Listen to port for request", 256, NULL, 1, NULL);
+  xTaskCreate(readPower, (const portCHAR *) "Read power consumption values", 128, NULL , 2, NULL);
+  xTaskCreate(listenForReq,  (const portCHAR *)"Listen to port for request", 256, NULL, 1, NULL);
 
   vTaskStartScheduler();
 }
@@ -121,19 +121,22 @@ void handshake(void *pvParameters) {
 void readSensor(void *pvParameters) {
   TickType_t xLastWakeTime;
   while (1) {
-    log("Entering read sensor");
+    log("eEntering read sensor");
     xLastWakeTime = xTaskGetTickCount();
+    log("Waiting for data mutex");
     if (xSemaphoreTake(bufMutex, DATABUF_SEM_WAIT) == pdTRUE) {
+      log("data mutex received");
       SensorGroup sensorData;
       memset(&sensorData, 0xff, sizeof(sensorData));
       sensorData.sensor0.accelX = sensorBufEmptyId;
+      databuf[sensorBufEmptyId] = sensorData;
       sensorBufEmptyId = (sensorBufEmptyId + 1) % SENSOR_BUF_SIZE;
       sensorBufFilled += (sensorBufFilled + 1 >= SENSOR_BUF_SIZE) ? 0 :  1;
+      
       log("Reading data");
-      //      Serial.print("Data buf: ");
-      //      Serial.println(sensorBufFilled);
-    }
+      }
     xSemaphoreGive(bufMutex);
+    log("data mutex released");
 
     vTaskDelayUntil(&xLastWakeTime, READ_SENSOR_FREQ);
     xLastWakeTime = xTaskGetTickCount();
@@ -191,27 +194,39 @@ void sendSensorBuf() {
   Response res;
   unsigned char id = 0;
   log("Sending sensor data");
-
+//  bool done = False;
   while (1) {
     if (xSemaphoreTake(bufMutex, DATABUF_SEM_WAIT) == pdTRUE) {
 
       // Check if buffer is empty
       if (sensorBufFilled <= 0) {
-        sendSensorDataDone(id);
-        xSemaphoreGive(bufMutex);
-        break;
+        while (1) {
+          sendSensorDataDone(id);
+          if (readRes(&res, SERIAL_TIMEOUT_PERIOD) == PACKET_OK && res.type == ACK && res.id == id) {
+            break;
+          }
+        }
+        
+      } else {
+        // Buffer is not empty, send 1 data
+        log("sending 1 data");
+        sendSensorData(&databuf[(sensorBufEmptyId - sensorBufFilled) % SENSOR_BUF_SIZE], id);
       }
 
-      // Buffer is not empty, send 1 data
-      sendSensorData(&databuf[(sensorBufEmptyId - sensorBufFilled) % SENSOR_BUF_SIZE], id);
-
+      
       if (readRes(&res, SERIAL_TIMEOUT_PERIOD) == PACKET_OK && res.type == ACK && res.id == id) {
+        log("Data ACK received");
         id++;
         sensorBufFilled--;
+        clearSerial();
+      } else {
+        log("Data ACK not received");
       }
     }
     xSemaphoreGive(bufMutex);
   }
+  xSemaphoreGive(bufMutex);
+
 }
 
 void sendPowerBuf() {
