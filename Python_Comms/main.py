@@ -31,7 +31,7 @@ if __name__ == '__main__':
                 continue
             msg_type, msg_id, data = msg_field
             # Message type is wrong. Resend request
-            if msg_type != pkt.SENSOR_DATA or msg_type != pkt.DONE:
+            if msg_type != pkt.SENSOR_DATA and msg_type != pkt.DONE:
                 print("Data Read: Invalid message type. Resend Req/ ACK")
                 continue
             if msg_id != id:
@@ -42,9 +42,11 @@ if __name__ == '__main__':
                 req = pkt.generate_msg(pkt.ACK, id)
                 id += 1
                 print("Data: {sensor_data}".format(sensor_data=data))
+                #port.write(req)
                 continue
             if msg_type == pkt.DONE:    # Last message
                 req = pkt.generate_msg(pkt.ACK, id)
+                port.write(req)
                 print("All data messages read")
                 break
 
@@ -81,9 +83,11 @@ if __name__ == '__main__':
                 continue
             if msg_type == pkt.DONE:    # Last message
                 req = pkt.generate_msg(pkt.ACK, id)
+                port.write(req)
                 print("All power messages read")
                 break
 
         # Done one iteration
         time.sleep(1)
+
 

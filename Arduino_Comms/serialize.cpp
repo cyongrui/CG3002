@@ -27,6 +27,7 @@ unsigned char blockingRead(unsigned char *buf, unsigned char len, unsigned char 
 
   do {
     if (Serial1.available()) {
+      Serial.println("HI");
       bytesRead = Serial1.readBytes(buf, len);
       if (bytesRead == len) {
         return READ_SUCCESS;
@@ -65,7 +66,7 @@ void sendRes(unsigned char type, unsigned char id) {
 
 void sendSensorData(SensorGroup *sensorData, unsigned char id) {
   unsigned char buf[64];
-  unsigned char len = serialize(buf, SENSOR_DATA, id, (void *)sensorData, sizeof(sensorData));
+  unsigned char len = serialize(buf, SENSOR_DATA, id, (void *)sensorData, sizeof(*sensorData));
   send(buf, len);
 }
 
