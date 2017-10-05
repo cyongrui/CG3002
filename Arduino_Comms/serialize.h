@@ -46,7 +46,8 @@ typedef struct SensorGroup {
 } SensorGroup;
 
 typedef struct Power {
-	short powerConsumed;
+	unsigned char voltage;
+  unsigned char current;
 } Power;
 
 
@@ -56,6 +57,9 @@ void send(unsigned char *buf, unsigned char len);   // unsigned char timeout
 void sendRes(unsigned char type, unsigned char id);
 void sendSensorData(SensorGroup *sensorData, unsigned char id);
 void sendSensorDataDone(unsigned char id);
+void sendPower(Power *pw, unsigned char id);
+void sendPowerDone(unsigned char id);
+
 
 
 // Reading
