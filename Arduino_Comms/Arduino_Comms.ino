@@ -21,7 +21,7 @@
 //SensorData d;
 
 static SensorGroup databuf[SENSOR_BUF_SIZE];
-static unsigned char powerBuf[POWER_BUF_SIZE];
+static Power powerBuf[POWER_BUF_SIZE];
 static SemaphoreHandle_t bufMutex;
 static SemaphoreHandle_t powerMutex;
 static SemaphoreHandle_t consoleMutex;
@@ -64,14 +64,14 @@ void setup() {
   //   databuf[i] = d;
   // }
 
-//  SensorGroup sensorData;
-//  memset(&sensorData, 0xee, sizeof(sensorData));
-//  for (int i = 0; i < 5; i++) {
-//      sensorData.sensor0.accelX = i;
-//      databuf[sensorBufEmptyId] = sensorData;
-//      sensorBufEmptyId = (sensorBufEmptyId + 1) % SENSOR_BUF_SIZE;
-//      sensorBufFilled += (sensorBufFilled + 1 >= SENSOR_BUF_SIZE) ? 0 :  1;
-//  }
+  //  SensorGroup sensorData;
+  //  memset(&sensorData, 0xee, sizeof(sensorData));
+  //  for (int i = 0; i < 5; i++) {
+  //      sensorData.sensor0.accelX = i;
+  //      databuf[sensorBufEmptyId] = sensorData;
+  //      sensorBufEmptyId = (sensorBufEmptyId + 1) % SENSOR_BUF_SIZE;
+  //      sensorBufFilled += (sensorBufFilled + 1 >= SENSOR_BUF_SIZE) ? 0 :  1;
+  //  }
 
   // function, task name for readability, stack size, NULL, priority
   bufMutex = xSemaphoreCreateMutex();
@@ -155,7 +155,7 @@ void readSensor(void *pvParameters) {
       databuf[sensorBufEmptyId] = sensorData;
       sensorBufEmptyId = (sensorBufEmptyId + 1) % SENSOR_BUF_SIZE;
       sensorBufFilled += (sensorBufFilled + 1 >= SENSOR_BUF_SIZE) ? 0 :  1;
-      
+
       log("Reading data");
     }
     xSemaphoreGive(bufMutex);
@@ -223,30 +223,25 @@ void sendSensorBuf() {
   Response res;
   unsigned char id = 0;
   log("Sending sensor data");
-//  bool done = False;
+  //  bool done = False;
   while (1) {
-    log("WAITFOREVER");
     if (xSemaphoreTake(bufMutex, DATABUF_SEM_WAIT) == pdTRUE) {
-       log("YAY");
       // Check if buffer is empty
       if (sensorBufFilled <= 0) {
-        log("empty");
         while (1) {
           sendSensorDataDone(id);
-          unsigned char test = readRes(&res, SERIAL_TIMEOUT_PERIOD);
-          log(test);
-          Serial.println(res.type);
-          Serial.println(res.id);
-          Serial.println(id);
+//          unsigned char test = readRes(&res, SERIAL_TIMEOUT_PERIOD);
+//          log(test);
+//          Serial.println(res.type);
+//          Serial.println(res.id);
+//          Serial.println(id);
           //log(res.type);
           //log(res,id);
-          //if (readRes(&res, SERIAL_TIMEOUT_PERIOD) == PACKET_OK && res.type == ACK && res.id == id) {
-          if (test == PACKET_OK && res.type == ACK && res.id == id) {  
-            log("inloop");
+          if (readRes(&res, SERIAL_TIMEOUT_PERIOD) == PACKET_OK && res.type == ACK && res.id == id) {
+          //if (test == PACKET_OK && res.type == ACK && res.id == id) {
             break;
           }
         }
-        log("Done123");
         break;
       } else {
         // Buffer is not empty, send 1 data
@@ -254,7 +249,7 @@ void sendSensorBuf() {
         sendSensorData(&databuf[(sensorBufEmptyId - sensorBufFilled) % SENSOR_BUF_SIZE], id);
       }
 
-      
+
       if (readRes(&res, SERIAL_TIMEOUT_PERIOD) == PACKET_OK && res.type == ACK && res.id == id) {
         log("Data ACK received");
         id++;
@@ -275,42 +270,44 @@ void sendPowerBuf() {
   Response res;
   unsigned char id = 0;
   log("Sending power...");
-//  bool done = False;
+  //  bool done = False;
   while (1) {
-    log("WAITFOREVER");
     if (xSemaphoreTake(powerMutex, POWER_SEM_WAIT) == pdTRUE) {
-       log("YAY");
       // Check if buffer is empty
       if (powerBufFilled <= 0) {
-        log("empty");
         while (1) {
           sendPowerDone(id);
-          unsigned char test = readRes(&res, SERIAL_TIMEOUT_PERIOD);
-          log(test);
-          Serial.println(res.type);
-          Serial.println(res.id);
-          Serial.println(id);
+//          unsigned char test = readRes(&res, SERIAL_TIMEOUT_PERIOD);
+//          log(test);
+//          Serial.println(res.type);
+//          Serial.println(res.id);
+//          Serial.println(id);
           //log(res.type);
           //log(res,id);
-          //if (readRes(&res, SERIAL_TIMEOUT_PERIOD) == PACKET_OK && res.type == ACK && res.id == id) {
-          if (test == PACKET_OK && res.type == ACK && res.id == id) {  
+          if (readRes(&res, SERIAL_TIMEOUT_PERIOD) == PACKET_OK && res.type == ACK && res.id == id) {
+          //if (test == PACKET_OK && res.type == ACK && res.id == id) {
             log("inloop");
             break;
           }
         }
-        log("Done123");
         break;
       } else {
         // Buffer is not empty, send 1 data
         log("sending 1 power");
         sendPower(&powerBuf[(powerBufEmptyId - powerBufFilled) % POWER_BUF_SIZE], id);
       }
-
-      
-      if (readRes(&res, SERIAL_TIMEOUT_PERIOD) == PACKET_OK && res.type == ACK && res.id == id) {
+      unsigned char test = readRes(&res, SERIAL_TIMEOUT_PERIOD);
+   //   log(test);
+//      Serial.println(res.type);
+//      Serial.println(res.id);
+//      Serial.println(id);
+      //log(res.type);
+      //log(res,id);
+      //if (readRes(&res, SERIAL_TIMEOUT_PERIOD) == PACKET_OK && res.type == ACK && res.id == id) {
+      if (test == PACKET_OK && res.type == ACK && res.id == id) {
         log("Power ACK received");
         id++;
-        sensorBufFilled--;
+        powerBufFilled--;
         clearSerial();
       } else {
         log("Power ACK not received");

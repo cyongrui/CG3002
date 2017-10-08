@@ -23,9 +23,3 @@ def handshake(port):
 
     print("handshake done!")
     
-
-
-
-
-
-

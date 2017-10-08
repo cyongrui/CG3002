@@ -81,14 +81,14 @@ void sendSensorDataDone(unsigned char id) {
 
 void sendPower(Power *pw, unsigned char id) {
   unsigned char buf[8];
-  unsigned char len = serialize(buf, POWER_DATA, i, (void *) pw, sizeof(Power));
+  unsigned char len = serialize(buf, POWER_DATA, id, (void *) pw, sizeof(Power));
   send(buf, len);
 }
 
 void sendPowerDone(unsigned char id) {
   unsigned char buf[8];
   Power pw = {0};
-  unsigned char len = serialize(buf, DONE, id, (void *) pw, sizeof(Power));
+  unsigned char len = serialize(buf, DONE, id, (void *) &pw, sizeof(Power));
   send(buf, len);
 }
 
