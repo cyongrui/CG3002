@@ -139,17 +139,15 @@ void readSensor(void *pvParameters) {
       log("data mutex received");
       SensorGroup sensorData;
       Sensor s;
-      s.accelX = 1;
-      s.accelY = 2;
-      s.accelZ = 3;
-      s.row0 = 4;
-      s.row1 = 5;
-      s.row2 = 6;
+      s.accelX = 1.0;
+      s.accelY = 2.0;
+      s.accelZ = 3.0;
+      s.row0 = 4.0;
+      s.row1 = 5.0;
+      s.row2 = 6.0;
       sensorData.sensor0 = s;
       sensorData.sensor1 = s;
       sensorData.sensor2 = s;
-      sensorData.sensor3 = s;
-      sensorData.sensor4 = s;
       //memset(&sensorData, 0xff, sizeof(sensorData));
       sensorData.sensor0.accelX = sensorBufEmptyId;
       databuf[sensorBufEmptyId] = sensorData;
@@ -174,8 +172,8 @@ void readPower(void *pvParameters) {
       // Read sensor data here
       log("Power mutex received");
       Power pw;
-      pw.voltage = powerBufEmptyId;
-      pw.current = 99;
+      pw.voltage = powerBufEmptyId / 1.0;
+      pw.current = 99.0;
       powerBuf[powerBufEmptyId] = pw;
       powerBufEmptyId = (powerBufEmptyId + 1) % POWER_BUF_SIZE;
       powerBufFilled += (powerBufFilled + 1 >= POWER_BUF_SIZE) ? 0 : 1;

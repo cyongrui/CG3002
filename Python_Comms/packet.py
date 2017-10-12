@@ -1,4 +1,5 @@
 import crc8
+import struct
 
 SENSOR_DATA = 1
 HELLO = 2
@@ -11,8 +12,8 @@ REQUEST_POWER = 8
 POWER_DATA = 9
 
 REPLY_LEN = 3
-POWER_LEN = 5
-DATA_LEN = 63
+POWER_LEN = 11 #5
+DATA_LEN = 75 #63
 
 
 def generate_msg(pkt_type, id):
@@ -71,14 +72,21 @@ def get_id(bytes_ls):
 
 def get_data(bytes_ls):
     data = []
-    for i in range(30):
-        sensor_reading = ord(bytes_ls[2 * i + 2]) + 256 * ord(bytes_ls[2 * i + 3])
-        data.append(sensor_reading)
+    for i in range(18):
+        float_bytes = bytes_ls[(4*i+2):(4*i+6)]
+        sensor_reading = struct.unpack('<f', float_bytes)[0]
+        data.append("{0:.2f}".format(sensor_reading))
     return data
 
 
 def get_power(bytes_ls):
-    return [ord(bytes_ls[2]), ord(bytes_ls[3])]
+    power = []
+    for i in range(2):
+        float_bytes = bytes_ls[(4 * i + 2):(4 * i + 6)]
+        power_reading = struct.unpack('<f', float_bytes)[0]
+        power.append("{0:.2f}".format(power_reading))
+    return power
+    #return [ord(bytes_ls[2]), ord(bytes_ls[3])]
 
 def checkCRC(bytes_ls):
     hex_values = map(lambda x: format(ord(x), '02x'), bytes_ls[:-1])
