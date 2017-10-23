@@ -19,25 +19,19 @@
 #define READ_TIMEOUT 3
 #define READ_SUCCESS 4
 
-#define SENSOR_BUF_SIZE 64
-#define POWER_BUF_SIZE 8 // 8
-#define RES_BUF_SIZE 3
+#define SENSOR_BUF 64
+#define POWER_BUF 8 // 8
+#define RES_BUF 3
 // #define NUM_SENSOR 5
 
 typedef struct Response {
   unsigned char type;
   unsigned char id;
-//  unsigned char crc;
+//unsigned char crc;
 } Response;
 
 
 typedef struct Sensor {
-//  float accelX;
-//  float accelY;
-//  float accelZ;
-//  float row0;
-//  float row1;
-//  float row2;
   short accelX; // short is signed
   short accelY;
   short accelZ;
@@ -47,11 +41,9 @@ typedef struct Sensor {
 } Sensor;
 
 typedef struct SensorGroup {
-	Sensor sensor0;
+  Sensor sensor0;
   Sensor sensor1;
   Sensor sensor2;
-//  Sensor sensor3;
-//  Sensor sensor4;
 } SensorGroup;
 
 typedef struct Power {

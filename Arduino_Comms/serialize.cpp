@@ -58,19 +58,19 @@ void send(unsigned char *buf, unsigned char len) {   // unsigned char timeout
 }
 
 void sendRes(unsigned char type, unsigned char id) {
-  unsigned char buf[RES_BUF_SIZE];
+  unsigned char buf[RES_BUF];
   serialize(buf, type, id, 0, 0);
-  send(buf, RES_BUF_SIZE);
+  send(buf, RES_BUF);
 }
 
 void sendSensorData(SensorGroup *sensorData, unsigned char id) {
-  unsigned char buf[SENSOR_BUF_SIZE];
+  unsigned char buf[SENSOR_BUF];
   unsigned char len = serialize(buf, SENSOR_DATA, id, (void *)sensorData, sizeof(SensorGroup));
   send(buf, len);
 }
 
 void sendSensorDataDone(unsigned char id) {
-  unsigned char buf[SENSOR_BUF_SIZE];
+  unsigned char buf[SENSOR_BUF];
   SensorGroup sensorData = {0};
   // memset(&sensorData, 0xff, sizeof(SensorGroup));
   unsigned char len = serialize(buf, DONE, id, (void *) &sensorData, sizeof(SensorGroup));
@@ -78,13 +78,13 @@ void sendSensorDataDone(unsigned char id) {
 }
 
 void sendPower(Power *pw, unsigned char id) {
-  unsigned char buf[POWER_BUF_SIZE];
+  unsigned char buf[POWER_BUF];
   unsigned char len = serialize(buf, POWER_DATA, id, (void *) pw, sizeof(Power));
   send(buf, len);
 }
 
 void sendPowerDone(unsigned char id) {
-  unsigned char buf[POWER_BUF_SIZE];
+  unsigned char buf[POWER_BUF];
   Power pw = {0};
   unsigned char len = serialize(buf, DONE, id, (void *) &pw, sizeof(Power));
   send(buf, len);

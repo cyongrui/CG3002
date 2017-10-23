@@ -13,7 +13,7 @@ POWER_DATA = 9
 
 REPLY_LEN = 3
 POWER_LEN = 7 #5
-DATA_LEN = 63 #75
+DATA_LEN = 39 #75
 
 
 def generate_msg(pkt_type, id):
@@ -72,15 +72,13 @@ def get_id(bytes_ls):
 
 def get_data(bytes_ls):
     data = []
-    for i in range(30):
-         sensor_reading = ord(bytes_ls[2 * i + 2]) + 256 * ord(bytes_ls[2 * i + 3])
-         data.append(sensor_reading)
+    for i in range(18):
+	 data_bytes = bytes_ls[(2*i+2):(2*i+4)]
+	 sensor_reading = struct.unpack('<h', data_bytes)[0]
+     #sensor_reading = ord(bytes_ls[2 * i + 2]) + 256 * ord(bytes_ls[2 * i + 3])
+     data.append(sensor_reading)
     return data    
-    #for i in range(18):
-    #    float_bytes = bytes_ls[(4*i+2):(4*i+6)]
-    #    sensor_reading = struct.unpack('<f', float_bytes)[0]
-    #    data.append("{0:.2f}".format(sensor_reading))
-    #return data
+
 
 
 def get_power(bytes_ls):
