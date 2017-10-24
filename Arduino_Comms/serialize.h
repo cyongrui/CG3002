@@ -20,24 +20,22 @@
 #define READ_SUCCESS 4
 
 #define SENSOR_BUF 64
-#define POWER_BUF 8 // 8
+#define POWER_BUF 8
 #define RES_BUF 3
 // #define NUM_SENSOR 5
 
 typedef struct Response {
   unsigned char type;
   unsigned char id;
-//unsigned char crc;
 } Response;
 
-
 typedef struct Sensor {
-  short accelX; // short is signed
-  short accelY;
-  short accelZ;
-  short row0;
-  short row1;
-  short row2;
+  int16_t accelX; // short is signed
+  int16_t accelY;
+  int16_t accelZ;
+  int16_t row0;
+  int16_t row1;
+  int16_t row2;
 } Sensor;
 
 typedef struct SensorGroup {
@@ -48,10 +46,6 @@ typedef struct SensorGroup {
 
 typedef struct Power {
   float power;
-//  float voltage;
-//  float current;
-//	unsigned char voltage;
-//  unsigned char current;
 } Power;
 
 
@@ -63,8 +57,6 @@ void sendSensorData(SensorGroup *sensorData, unsigned char id);
 void sendSensorDataDone(unsigned char id);
 void sendPower(Power *pw, unsigned char id);
 void sendPowerDone(unsigned char id);
-
-
 
 // Reading
 unsigned char readRes(Response *res, unsigned char timeout);

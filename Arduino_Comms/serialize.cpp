@@ -3,10 +3,11 @@
 #include "serialize.h"
 #include <SoftwareSerial.h>
 
+// TODO: Improve robustness of reads
+
 // Reading
 unsigned char readRes(Response *res, unsigned char timeout) {
   unsigned char buf[3];
-  
   unsigned char status = blockingRead(buf, 3, timeout);
   if (status != READ_SUCCESS) { // check if read is successful
     return status;
@@ -24,15 +25,11 @@ unsigned char readRes(Response *res, unsigned char timeout) {
 unsigned char blockingRead(unsigned char *buf, unsigned char len, unsigned char timeout) {
   unsigned long start = millis();
   unsigned char bytesRead;
-
   do {
     if (Serial1.available()) {
       bytesRead = Serial1.readBytes(buf, len);
-      if (bytesRead == len) {
-        return READ_SUCCESS;
-      } else {
-        return INVALID_RES;
-      }
+      if (bytesRead == len) return READ_SUCCESS;
+      else                  return INVALID_RES;
     }
   } while (millis() < start + timeout);
   return READ_TIMEOUT;
@@ -50,7 +47,7 @@ unsigned char serialize(unsigned char *buf, unsigned char type, unsigned char id
   buf[1] = id;
   memcpy(buf + 2, data, len);
   buf[len + 2] = CRC8(buf, len + 2);
-  return len + 3;
+  return len + 3; // type + id + crc = 3
 }
 
 void send(unsigned char *buf, unsigned char len) {   // unsigned char timeout
@@ -72,7 +69,6 @@ void sendSensorData(SensorGroup *sensorData, unsigned char id) {
 void sendSensorDataDone(unsigned char id) {
   unsigned char buf[SENSOR_BUF];
   SensorGroup sensorData = {0};
-  // memset(&sensorData, 0xff, sizeof(SensorGroup));
   unsigned char len = serialize(buf, DONE, id, (void *) &sensorData, sizeof(SensorGroup));
   send(buf, len);
 }
@@ -89,21 +85,3 @@ void sendPowerDone(unsigned char id) {
   unsigned char len = serialize(buf, DONE, id, (void *) &pw, sizeof(Power));
   send(buf, len);
 }
-
-
-
-// void writeRes(unsigned char type, unsigned char id) {
-//   unsigned char buf[3];
-//   unsigned char len = serialize(buf, type, id, 0);
-//   sendSerialData(buf, len);
-// }
-
-
-// unsigned char getDataLength(unsigned type) {
-//   if (type == DATA || type == DONE) {
-//     // Data packet
-//     return sizeof(SensorData);
-//   } else {
-//     return 0;
-//   }
-// }
