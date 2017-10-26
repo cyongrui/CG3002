@@ -15,7 +15,8 @@ const float RS = 0.1; // Shunt resistor value (in ohms)
 // Voltmeter constants and variables
 const float ratio = 2.0; // ratio = 1 / (R2 / (R1 + R2))
 
-float measurePower() {
+Power measurePower() {
+  Power power;
 	int inputVolt = analogRead(VOLTMETER_PIN);
 	float voltOut = (inputVolt * VOLTAGE_REF) / 1024.0;
 	float voltIn = voltOut * ratio; 
@@ -23,8 +24,10 @@ float measurePower() {
 	int inputAmp = analogRead(AMMETER_PIN);
 	float current = ((inputAmp * VOLTAGE_REF) / 1024.0) / (10 * RS);
 	current = 0.35 + inputAmp * 0.003;
-
-	float power = voltIn * current;		
+  
+	//float power = voltIn * current;		
+	power.voltage = voltIn;
+  power.current = current;
 	return power;
 }
 

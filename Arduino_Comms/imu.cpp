@@ -22,11 +22,11 @@ bool initialize(uint8_t pin) {
 void readImu(uint8_t pin, Sensor *s) {
   activate(pin);
   if (pin == MPU_EN_ARM_L) {
-    accelgyro.setXAccelOffset(-2083);
-    accelgyro.setYAccelOffset(799);
-    accelgyro.setZAccelOffset(1568);
-    accelgyro.setXGyroOffset(118);
-    accelgyro.setYGyroOffset(15);
+    accelgyro.setXAccelOffset(-2060);
+    accelgyro.setYAccelOffset(640);
+    accelgyro.setZAccelOffset(1592);
+    accelgyro.setXGyroOffset(115);
+    accelgyro.setYGyroOffset(13);
     accelgyro.setZGyroOffset(6);
   } else if (pin == MPU_EN_ARM_R) {
     accelgyro.setXAccelOffset(-730);
@@ -36,12 +36,12 @@ void readImu(uint8_t pin, Sensor *s) {
     accelgyro.setYGyroOffset(-20);
     accelgyro.setZGyroOffset(28);
   } else if (pin == MPU_EN_TORSO) {
-    accelgyro.setXAccelOffset(390);
-    accelgyro.setYAccelOffset(4224);
-    accelgyro.setZAccelOffset(2011);
-    accelgyro.setXGyroOffset(-37);
-    accelgyro.setYGyroOffset(73);
-    accelgyro.setZGyroOffset(82);
+    accelgyro.setXAccelOffset(588);
+    accelgyro.setYAccelOffset(4067);
+    accelgyro.setZAccelOffset(2070);
+    accelgyro.setXGyroOffset(-38);
+    accelgyro.setYGyroOffset(75);
+    accelgyro.setZGyroOffset(101);
   }
   accelgyro.getMotion6(&(s->accelX), &(s->accelY), &(s->accelZ), &(s->row0), &(s->row1), &(s->row2));
 

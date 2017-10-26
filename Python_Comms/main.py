@@ -2,15 +2,37 @@ import handshake as hs
 import serial
 import time
 import packet as pkt
+import numpy as np
+import cPickle as pickle
+from sklearn import preprocessing as pp
+import client as clt
+import sys
+import csv
+
+SERVER_EXIST = False
 
 if __name__ == '__main__':
     port=serial.Serial('/dev/ttyAMA0', baudrate=115200, timeout=3.0)
+    
+    # Initialize client server communication
+    if len(sys.argv) == 3:
+        IP_ADDR = sys.argv[1]
+        PORT_NUM = sys.argv[2]
+        SERVER_EXIST = True
+        my_client = clt(IP_ADDR, PORT_NUM)
+        print("Established connection with server")
+
     hs.handshake(port)
     # Handshake done
-
+    
+    log_file = csv.writer(open ('data.csv', 'w'), delimiter=',', lineterminator='\n')
+    
     data_buf = []
     power_buf = []
 
+    # Load machine learning model
+    clf = pickle.load(open('model40.pkl',"rb"))
+    model_input_size = 40
     # Wait for 2 seconds for Arduino to collect data
     time.sleep(2)
 
@@ -42,7 +64,7 @@ if __name__ == '__main__':
                 req = pkt.generate_msg(pkt.ACK, id)
                 id += 1
                 print("Data: {sensor_data}".format(sensor_data=data))
-                #port.write(req)
+                log_file.writerow(data)
                 continue
             if msg_type == pkt.DONE:    # Last message
                 req = pkt.generate_msg(pkt.ACK, id)
@@ -52,10 +74,12 @@ if __name__ == '__main__':
 
         # Machine learning algorithm
         # pass first n element into the algorithm
-        n = 5
-        if len(data_buf) >= 5:
-            del data_buf[:n]    # delete first n element
-
+        if len(data_buf) >= model_input_size:
+	    input = np.hstack(data_buf[-model_input_size:]).reshape(1, -1)
+	    input = pp.normalize(input.astype(np.float64))
+	    label = clf.predict(input)
+            print(label)
+	    data_buf = []
 
         # Reading power data
         id = 0
@@ -89,5 +113,11 @@ if __name__ == '__main__':
 
         print("cycle done")
         # Done one iteration
-        time.sleep(1)
+
+        if SERVER_EXIST:
+            message = my_client.formatMessage(power, label)
+            encrypted = my_client.encrypt(message)
+            my_client.sock.send(encrypted)
+
+        time.sleep(1.0)
 

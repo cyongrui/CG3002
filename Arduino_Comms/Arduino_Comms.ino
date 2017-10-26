@@ -147,7 +147,7 @@ void readPower(void *pvParameters) {
       // Read sensor data here
       log("Power mutex received");
       Power pw;
-      pw.power = measurePower();
+      pw = measurePower();
 //      pw.voltage = powerBufEmptyId / 1.0;
 //      pw.current = 99.0;
       powerBuf[powerBufEmptyId] = pw;

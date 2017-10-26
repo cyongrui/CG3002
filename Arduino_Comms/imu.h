@@ -5,7 +5,7 @@
 #ifndef IMU_H
 #define IMU_H
 
-#define MPU_EN_ARM_L 45
+#define MPU_EN_ARM_L 47
 #define MPU_EN_ARM_R 41
 #define MPU_EN_TORSO 33 
 
