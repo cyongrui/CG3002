@@ -15,9 +15,13 @@
 #define READ_SENSOR_FREQ (50 / portTICK_PERIOD_MS)
 #define READ_POWER_FREQ (1000 / portTICK_PERIOD_MS)
 #define LISTEN_FREQ (300 / portTICK_PERIOD_MS)
+#define COUNTER_SEM_WAIT 200
 
 #define SENSOR_BUF_SIZE 50
 #define POWER_BUF_SIZE 10
+
+#define RESETPIN 50
+#define MAX_TRIES 30
 
 //SensorData d;
 
@@ -26,11 +30,14 @@ static Power powerBuf[POWER_BUF_SIZE];
 static SemaphoreHandle_t bufMutex;
 static SemaphoreHandle_t powerMutex;
 static SemaphoreHandle_t consoleMutex;
+static SemaphoreHandle_t counterMutex;
 
 static unsigned int sensorBufEmptyId = 0;
 static unsigned int sensorBufFilled = 0;
 static unsigned int powerBufEmptyId = 0;
 static unsigned int powerBufFilled = 0;
+
+static unsigned short messageFailCount = 0;
 
 void log(const char* msg) {
   if (LOGGING_ENABLED) {
@@ -50,6 +57,33 @@ void log(unsigned char msg) {
   }
 }
 
+void incrementCounter() {
+  if (xSemaphoreTake(counterMutex, DATABUF_SEM_WAIT) == pdTRUE) {
+    messageFailCount++;
+  }
+  xSemaphoreGive(counterMutex);
+}
+
+void resetCounter() {
+  if (xSemaphoreTake(counterMutex, DATABUF_SEM_WAIT) == pdTRUE) {
+    messageFailCount = 0;
+  }
+  xSemaphoreGive(counterMutex);
+}
+
+bool toReset(){
+  if (xSemaphoreTake(counterMutex, DATABUF_SEM_WAIT) == pdTRUE && messageFailCount >= MAX_TRIES) {
+    xSemaphoreGive(counterMutex);
+    return true;
+  }
+  xSemaphoreGive(counterMutex);
+  return false;
+}
+
+void reset() {
+  log("Resetting!");
+  digitalWrite(RESETPIN, LOW);
+}
 
 // TODO: Refactor code
 
@@ -57,6 +91,9 @@ void setup() {
   // configure LED
   Serial.begin(115200);
   Serial1.begin(115200);
+
+  digitalWrite(RESETPIN, HIGH);
+  pinMode(RESETPIN, OUTPUT);
 
   setup_imu();
   // function, task name for readability, stack size, NULL, priority
@@ -75,9 +112,15 @@ void setup() {
     Serial.println("Error: Semaphore cannot be created.");
   }
 
+  counterMutex = xSemaphoreCreateMutex();
+  if (consoleMutex == NULL) {
+    Serial.println("Error: Semaphore cannot be created.");
+  }
+
   xSemaphoreGive(bufMutex);
   xSemaphoreGive(powerMutex);
   xSemaphoreGive(consoleMutex);
+  xSemaphoreGive(counterMutex);
 
   xTaskCreate(handshake, (const portCHAR *) "HS", 128, NULL , 4, NULL);
   xTaskCreate(readSensor, (const portCHAR *) "RS", 128, NULL , 3, NULL);
@@ -128,7 +171,6 @@ void readSensor(void *pvParameters) {
       databuf[sensorBufEmptyId] = sensorData;
       sensorBufEmptyId = (sensorBufEmptyId + 1) % SENSOR_BUF_SIZE;
       sensorBufFilled += (sensorBufFilled + 1 >= SENSOR_BUF_SIZE) ? 0 :  1;
-
       log("Reading data");
     }
     xSemaphoreGive(bufMutex);
@@ -148,14 +190,10 @@ void readPower(void *pvParameters) {
       log("Power mutex received");
       Power pw;
       pw = measurePower();
-//      pw.voltage = powerBufEmptyId / 1.0;
-//      pw.current = 99.0;
       powerBuf[powerBufEmptyId] = pw;
       powerBufEmptyId = (powerBufEmptyId + 1) % POWER_BUF_SIZE;
       powerBufFilled += (powerBufFilled + 1 >= POWER_BUF_SIZE) ? 0 : 1;
-
       log("reading power");
-
     }
     xSemaphoreGive(powerMutex);
     vTaskDelayUntil(&xLastWakeTime, READ_POWER_FREQ);
@@ -186,6 +224,8 @@ void listenForReq(void *pvParameters) {
     } else if (res.type == REQUEST_POWER) {
       sendPowerBuf();
       log("Power data transfer complete!");
+    } else if (res.type == RESET) {
+      reset();
     } else {
       continue;
     }
@@ -199,12 +239,17 @@ void sendSensorBuf() {
   log("Sending sensor data");
   //  bool done = False;
   while (1) {
+    if(toReset()){
+      reset();
+    }
     if (xSemaphoreTake(bufMutex, DATABUF_SEM_WAIT) == pdTRUE) {
       // Check if buffer is empty
       if (sensorBufFilled <= 0) {
         while (1) {
           sendSensorDataDone(id);
+          incrementCounter();
           if (readRes(&res, SERIAL_TIMEOUT_PERIOD) == PACKET_OK && res.type == ACK && res.id == id) {
+            resetCounter();
             break;
           }
         }
@@ -221,15 +266,15 @@ void sendSensorBuf() {
         id++;
         sensorBufFilled--;
         clearSerial();
+        resetCounter();
       } else {
-        log("Data ACK not received");
+        incrementCounter();
+        log("Data ACK not received");        
       }
     }
-    log("LAST");
     xSemaphoreGive(bufMutex);
   }
   xSemaphoreGive(bufMutex);
-
 }
 
 void sendPowerBuf() {
@@ -238,13 +283,17 @@ void sendPowerBuf() {
   log("Sending power...");
   //  bool done = False;
   while (1) {
+    if(toReset()){
+      reset();
+    }
     if (xSemaphoreTake(powerMutex, POWER_SEM_WAIT) == pdTRUE) {
       // Check if buffer is empty
       if (powerBufFilled <= 0) {
         while (1) {
           sendPowerDone(id);
+          incrementCounter();
           if (readRes(&res, SERIAL_TIMEOUT_PERIOD) == PACKET_OK && res.type == ACK && res.id == id) {
-//            log("inloop");
+            resetCounter();
             break;
           }
         }
@@ -260,11 +309,12 @@ void sendPowerBuf() {
         id++;
         powerBufFilled--;
         clearSerial();
+        resetCounter();
       } else {
+        incrementCounter();
         log("Power ACK not received");
       }
     }
-    log("LAST");
     xSemaphoreGive(powerMutex);
   }
   xSemaphoreGive(powerMutex);

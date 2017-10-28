@@ -11,6 +11,7 @@
 #define REQUEST_DATA 7
 #define REQUEST_POWER 8
 #define POWER_DATA 9
+#define RESET 10
 
 // Packet status
 #define PACKET_OK 0

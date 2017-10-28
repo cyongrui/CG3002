@@ -27,13 +27,17 @@ class client:
         cipher = AES.new(self.getKey(), AES.MODE_CBC, IV)
         return base64.b64encode(IV + cipher.encrypt(message))
 
+    # TODO
+    def formatMessage(self, power, label):
+        voltage = power[0]
+        current = power[1]
+        power = float(voltage) * float(current)
+        message = '#'+ str(label) + '|' + voltage + '|' + current + '|' + str(power) + '|' + str(power)
+        return message.encode('utf8')
 
     # Returns secret key if it exists
     # Otherwise create a new random secret key
     def getKey(self):
-        # TODO
-        # Encrypt secret key
-        # Currently stored as bytes
         try:
             file = open(FILE, 'rb')
             key = file.read()

@@ -10,10 +10,13 @@ DONE = 6
 REQUEST_DATA = 7
 REQUEST_POWER = 8
 POWER_DATA = 9
+RESET = 10
 
 REPLY_LEN = 3
 POWER_LEN = 11 #7
 DATA_LEN = 39 #75
+
+MAX_FAILED_MSG = 3
 
 
 def generate_msg(pkt_type, id):
@@ -26,7 +29,7 @@ def generate_msg(pkt_type, id):
 def read_reply_msg(bytes_ls):
     if len(bytes_ls) < 3:
         print("Listen timeout")
-        return None 
+        return None
     elif not checkCRC(bytes_ls):
         print("CRC error")
         return None
@@ -73,11 +76,10 @@ def get_id(bytes_ls):
 def get_data(bytes_ls):
     data = []
     for i in range(18):
-	data_bytes = bytes_ls[(2*i+2):(2*i+4)]
-	sensor_reading = struct.unpack('<h', data_bytes)[0]
-     #sensor_reading = ord(bytes_ls[2 * i + 2]) + 256 * ord(bytes_ls[2 * i + 3])
-    	data.append(sensor_reading)
-    return data    
+        data_bytes = bytes_ls[(2*i+2):(2*i+4)]
+        sensor_reading = struct.unpack('<h', data_bytes)[0]
+        data.append(sensor_reading)
+    return data
 
 
 
@@ -85,7 +87,7 @@ def get_power(bytes_ls):
     power = []
     for i in range(2):
         float_bytes = bytes_ls[(4 * i + 2):(4 * i + 6)]
-        #float_bytes = bytes_ls[2:6]        
+        #float_bytes = bytes_ls[2:6]
         power_reading = struct.unpack('<f', float_bytes)[0]
         power.append("{0:.2f}".format(power_reading))
     return power
