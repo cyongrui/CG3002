@@ -48,33 +48,45 @@ void readImu(uint8_t pin, Sensor *s) {
 }
 
 void setup_imu() {
-  #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-    Wire.begin();
-  #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
-    Fastwire::setup(400, true);
-  #endif
-
+#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+  Wire.begin();
+  Serial.println("WIRE");
+#elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
+  Fastwire::setup(400, true);
+  Serial.println("FASTWIRE");
+#endif
+  
   // initialize device
   pinMode(MPU_EN_ARM_L, OUTPUT);
   pinMode(MPU_EN_ARM_R, OUTPUT);
   pinMode(MPU_EN_TORSO, OUTPUT);
+  unsigned short counter = 0;
+  while (counter < 3) {
 
-  Serial.println("initialising");
-  // verify connection
-  bool good = true;
-  good = good && initialize(MPU_EN_ARM_L);
-  good = good && initialize(MPU_EN_ARM_R);
-  good = good && initialize(MPU_EN_TORSO);
-  delay(3000);
-  if (good) {
-    Serial.println("initialisation done");
+    Serial.println("initialising");
+    // verify connection
+    bool good = true;
+    good = good && initialize(MPU_EN_ARM_L);
+    if(!good) Serial.println("LEFT");
+    good = good && initialize(MPU_EN_ARM_R);
+    if(!good) Serial.println("R");
+    good = good && initialize(MPU_EN_TORSO);
+    if(!good) Serial.println("M");
+    delay(3000);
+    if (good) {
+      Serial.println("initialisation done");
+      break;
+    } else {
+      counter++;
+      Serial.println("Fail");
+    }
   }
 }
 
 
 // Code to poll accelerometers
 void pollSensor(SensorGroup *s) {
-  Serial.println("polling");
+  //Serial.println("polling");
   readImu(MPU_EN_ARM_L, &(s->sensor0));
   readImu(MPU_EN_ARM_R, &(s->sensor1));
   readImu(MPU_EN_TORSO, &(s->sensor2));

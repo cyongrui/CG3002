@@ -21,7 +21,7 @@
 #define READ_SUCCESS 4
 
 #define SENSOR_BUF 64
-#define POWER_BUF 12
+#define POWER_BUF 16
 #define RES_BUF 3
 // #define NUM_SENSOR 5
 
@@ -48,6 +48,7 @@ typedef struct SensorGroup {
 typedef struct Power {
   float voltage;
   float current;
+  float inst_power;
 } Power;
 
 

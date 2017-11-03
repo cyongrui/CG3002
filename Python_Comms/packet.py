@@ -13,10 +13,10 @@ POWER_DATA = 9
 RESET = 10
 
 REPLY_LEN = 3
-POWER_LEN = 11 #7
+POWER_LEN = 15 #7
 DATA_LEN = 39 #75
 
-MAX_FAILED_MSG = 3
+MAX_FAILED_MSG = 2
 
 
 def generate_msg(pkt_type, id):
@@ -85,11 +85,11 @@ def get_data(bytes_ls):
 
 def get_power(bytes_ls):
     power = []
-    for i in range(2):
+    for i in range(3):
         float_bytes = bytes_ls[(4 * i + 2):(4 * i + 6)]
         #float_bytes = bytes_ls[2:6]
         power_reading = struct.unpack('<f', float_bytes)[0]
-        power.append("{0:.2f}".format(power_reading))
+        power.append("{0:.7f}".format(power_reading))
     return power
 
 def checkCRC(bytes_ls):

@@ -1,3 +1,4 @@
+
 import handshake as hs
 import serial
 import time
@@ -7,17 +8,20 @@ import cPickle as pickle
 from sklearn import preprocessing as pp
 from client import client
 import sys
-import csv
+#import csv
+from scipy.stats import mode
 
 SERVER_EXIST = False
 cumulative_power = 0.0
+toPrint = True
+label = 0
 
 if __name__ == '__main__':
     port = serial.Serial('/dev/ttyAMA0', baudrate=115200, timeout=3.0)
 
     hs.handshake(port)
     # Handshake done
-
+ 
     # Initialize client server communication
     if len(sys.argv) == 3:
         while not SERVER_EXIST:
@@ -31,20 +35,20 @@ if __name__ == '__main__':
             SERVER_EXIST = True
             print("Established connection with server")
 
-    log_file = csv.writer(open('0.csv', 'w'), delimiter=',', lineterminator='\n')
+    #log_file = csv.writer(open('0.csv', 'w'), delimiter=',', lineterminator='\n')
 
     data_buf = []
     power_buf = []
 
     # Load machine learning model
-    clf = pickle.load(open('model40.pkl', "rb"))
-    model_input_size = 40
+    clf, scaler = pickle.load(open('model40.pkl', "rb"))
+    m_input_size = 40
     # Wait for 2 seconds for Arduino to collect data
     time.sleep(2)
 
     while True:
-        print("Length of databuf: {databufsize}").format(databufsize=len(data_buf))
-        print("Length of powerbuf: {powerbufsize}").format(powerbufsize=len(power_buf))
+        # print("Length of databuf: {databufsize}").format(databufsize=len(data_buf))
+        # print("Length of powerbuf: {powerbufsize}").format(powerbufsize=len(power_buf))
 
         # Reading sensor data
         id = 0
@@ -62,7 +66,7 @@ if __name__ == '__main__':
             if msg_field is None:
                 print("Data Read: Issues with timeout or checksum")
                 hs.unsuccesful_msg()
-		continue
+                continue
             msg_type, msg_id, data = msg_field
             # Message type is wrong. Resend request
             if msg_type != pkt.SENSOR_DATA and msg_type != pkt.DONE:
@@ -77,24 +81,39 @@ if __name__ == '__main__':
                 data_buf.append(data)
                 req = pkt.generate_msg(pkt.ACK, id)
                 id += 1
-                print("Data: {sensor_data}".format(sensor_data=data))
-                log_file.writerow(data)
+                if toPrint:
+                    print("Data: {sensor_data}".format(sensor_data=data))
+                    toPrint = False
+                #log_file.writerow(data)
                 hs.unsuccesful_msg.counter = 0
                 continue
             if msg_type == pkt.DONE:  # Last message
                 req = pkt.generate_msg(pkt.ACK, id)
                 port.write(req)
                 print("All data messages read")
+                toPrint = True
                 break
 
-        # Machine learning algorithm
-        # pass first n element into the algorithm
-        if len(data_buf) >= model_input_size:
-            input = np.hstack(data_buf[-model_input_size:]).reshape(1, -1)
-            input = pp.normalize(input.astype(np.float64))
-            label = clf.predict(input)
+
+            # Machine learning algorithm
+        label = 0
+        if len(data_buf) >= m_input_size + 11:
+            data_buf = np.array(data_buf[-(m_input_size + 11):])
+            # print 'length: {}'.format(len(data_buf))	# check to see if length is 51
+
+            data_diff = []
+            for i in range(len(data_buf)-1):		# Iterate from 0 to 50
+                data_diff.append(data_buf[i+1] - data_buf[i])
+
+            inputs = scaler.transform(data_diff)	# data_diff should have 50 data
+            test = []
+            for i in range(10):
+                test.append(np.hstack(inputs[i:i+m_input_size]))
+
+            label = mode(clf.predict(test))[0][0]	# take the mode of 10 predictions
             print(label)
             data_buf = []
+
 
         # Reading power data
         id = 0
@@ -124,6 +143,7 @@ if __name__ == '__main__':
             if msg_type == pkt.POWER_DATA:  # Message is correct
                 power_buf.append(power)
                 req = pkt.generate_msg(pkt.ACK, id)
+                cumulative_power += float(power[2])
                 id += 1
                 print("Power: {power}".format(power=power))
                 hs.unsuccesful_msg.counter = 0
@@ -134,12 +154,14 @@ if __name__ == '__main__':
                 print("All power messages read")
                 break
 
-        print("cycle done")
+        # print("cycle done")
         # Done one iteration
 
-        if SERVER_EXIST:
-            message = my_client.formatMessage(power_buf[len(power_buf) - 1], label)
+        if SERVER_EXIST and label != 0:
+            print("Sending")
+            message = my_client.formatMessage(power_buf[len(power_buf) - 1], label, cumulative_power)
             encrypted = my_client.encrypt(message)
             my_client.sock.send(encrypted)
 
-        time.sleep(1.0)
+        time.sleep(5.0)
+

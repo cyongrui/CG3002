@@ -4,8 +4,8 @@
 #include <Arduino.h>
 #include "power.h"
 
-const int VOLTMETER_PIN=0;
-const int AMMETER_PIN=1;
+const int VOLTMETER_PIN=A15;
+const int AMMETER_PIN=A14;
 
 //const int VOLTMETER_PIN=A0;
 //const int AMMETER_PIN=A1;
@@ -22,12 +22,16 @@ Power measurePower() {
 	float voltIn = voltOut * ratio; 
 
 	int inputAmp = analogRead(AMMETER_PIN);
-	float current = ((inputAmp * VOLTAGE_REF) / 1024.0) / (10 * RS);
-	current = 0.35 + inputAmp * 0.003;
+	float current = ((inputAmp * VOLTAGE_REF) / 1024.0);
+	//current = inputAmp * 0.003;
   
 	//float power = voltIn * current;		
 	power.voltage = voltIn;
   power.current = current;
+  power.inst_power = voltIn * current;
+  Serial.println(inputVolt);
+  Serial.println(inputAmp);
+  Serial.println("==================================");
 	return power;
 }
 

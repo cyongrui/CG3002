@@ -26,8 +26,8 @@ unsigned char blockingRead(unsigned char *buf, unsigned char len, unsigned char 
   unsigned long start = millis();
   unsigned char bytesRead;
   do {
-    if (Serial1.available()) {
-      bytesRead = Serial1.readBytes(buf, len);
+    if (Serial3.available()) {
+      bytesRead = Serial3.readBytes(buf, len);
       if (bytesRead == len) return READ_SUCCESS;
       else                  return INVALID_RES;
     }
@@ -36,8 +36,8 @@ unsigned char blockingRead(unsigned char *buf, unsigned char len, unsigned char 
 }
 
 void clearSerial() {
-  while (Serial1.available()) {
-    Serial1.read();
+  while (Serial3.available()) {
+    Serial3.read();
   }
 }
 
@@ -51,7 +51,7 @@ unsigned char serialize(unsigned char *buf, unsigned char type, unsigned char id
 }
 
 void send(unsigned char *buf, unsigned char len) {   // unsigned char timeout
-  Serial1.write(buf, len);
+  Serial3.write(buf, len);
 }
 
 void sendRes(unsigned char type, unsigned char id) {

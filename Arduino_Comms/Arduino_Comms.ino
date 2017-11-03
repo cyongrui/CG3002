@@ -20,7 +20,7 @@
 #define SENSOR_BUF_SIZE 50
 #define POWER_BUF_SIZE 10
 
-#define RESETPIN 50
+#define RESETPIN 12
 #define MAX_TRIES 30
 
 //SensorData d;
@@ -81,7 +81,7 @@ bool toReset(){
 }
 
 void reset() {
-  log("Resetting!");
+  log("Resetting");
   digitalWrite(RESETPIN, LOW);
 }
 
@@ -90,7 +90,7 @@ void reset() {
 void setup() {
   // configure LED
   Serial.begin(115200);
-  Serial1.begin(115200);
+  Serial3.begin(115200);
 
   digitalWrite(RESETPIN, HIGH);
   pinMode(RESETPIN, OUTPUT);
@@ -183,7 +183,7 @@ void readSensor(void *pvParameters) {
 void readPower(void *pvParameters) {
   TickType_t xLastWakeTime;
   while (1) {
-    log("!Entering read power");
+    log("Entering read power");
     xLastWakeTime = xTaskGetTickCount();
     if (xSemaphoreTake(powerMutex, POWER_SEM_WAIT) == pdTRUE) {
       // Read sensor data here
@@ -208,7 +208,7 @@ void listenForReq(void *pvParameters) {
   while (1) {
     vTaskDelay(LISTEN_FREQ);
     log("Entering listen for req");
-    if (Serial1.available() <= 0) {
+    if (Serial3.available() <= 0) {
       continue;
     }
     // Serial1 bytes available in serial

@@ -5,7 +5,8 @@ import base64
 import random
 
 BLOCK_SIZE = 16
-FILE = "/tmp/token"
+FILE = "token"
+POWER_DIVISOR = 1000/62
 
 class client:
     def __init__(self, ip_addr, port_num):
@@ -14,8 +15,12 @@ class client:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_address = (ip_addr, port_num)
         print('Connecting to %s port %s' % server_address)
-        self.sock.connect((ip_addr, port_num))
+        self.sock.connect((ip_addr, port_num))        
+        self.actions = ['None', 'wavehands', 'busdriver', 'frontback', 'sidestep', 'jumping', 'jumpingjack', 
+                        'squatturnclap', 'turnclap', 'windowcleaner360',
+                        'windowcleaning']
         print('Connected')
+        
 
     def send(self, message):
         encrypted = self.encrypt(message)
@@ -28,11 +33,14 @@ class client:
         return base64.b64encode(IV + cipher.encrypt(message))
 
     # TODO
-    def formatMessage(self, power, label):
+    def formatMessage(self, power, label, cum_power_reading):
         voltage = power[0]
         current = power[1]
-        power = float(voltage) * float(current)
-        message = '#'+ str(label) + '|' + voltage + '|' + current + '|' + str(power) + '|' + str(power)
+        inst_power = power[2]
+        #power = float(voltage) * float(current)
+        action = self.actions[label]
+        cumulative_power = cum_power_reading / POWER_DIVISOR
+        message = '#'+ action + '|' + voltage + '|' + current + '|' + inst_power + '|' + str(cumulative_power)
         return message.encode('utf8')
 
     # Returns secret key if it exists
