@@ -4,8 +4,8 @@
 #include <Arduino.h>
 #include "power.h"
 
-const int VOLTMETER_PIN=A15;
-const int AMMETER_PIN=A14;
+const int VOLTMETER_PIN=A14;
+const int AMMETER_PIN=A15;
 
 //const int VOLTMETER_PIN=A0;
 //const int AMMETER_PIN=A1;

@@ -15,10 +15,12 @@ SERVER_EXIST = False
 cumulative_power = 0.0
 toPrint = True
 label = 0
+counter = 0
+# read = False
 
 if __name__ == '__main__':
     port = serial.Serial('/dev/ttyAMA0', baudrate=115200, timeout=3.0)
-
+    #csv_file_name = raw_input("Enter csv file name: ")
     hs.handshake(port)
     # Handshake done
  
@@ -35,7 +37,8 @@ if __name__ == '__main__':
             SERVER_EXIST = True
             print("Established connection with server")
 
-    #log_file = csv.writer(open('0.csv', 'w'), delimiter=',', lineterminator='\n')
+    # csv_file_name = raw_input("Enter csv file name: ")
+    #log_file = csv.writer(open(str(csv_file_name), 'w'), delimiter=',', lineterminator='\n')
 
     data_buf = []
     power_buf = []
@@ -45,6 +48,7 @@ if __name__ == '__main__':
     m_input_size = 40
     # Wait for 2 seconds for Arduino to collect data
     time.sleep(2)
+    time.sleep(55)
 
     while True:
         # print("Length of databuf: {databufsize}").format(databufsize=len(data_buf))
@@ -97,20 +101,26 @@ if __name__ == '__main__':
 
             # Machine learning algorithm
         label = 0
-        if len(data_buf) >= m_input_size + 11:
-            data_buf = np.array(data_buf[-(m_input_size + 11):])
+        if (len(data_buf) >= m_input_size + 10):
+        # if len(data_buf) >= m_input_size + 10:
+            data_buf = np.array(data_buf)[-(m_input_size + 10):]
             # print 'length: {}'.format(len(data_buf))	# check to see if length is 51
 
-            data_diff = []
-            for i in range(len(data_buf)-1):		# Iterate from 0 to 50
-                data_diff.append(data_buf[i+1] - data_buf[i])
+            #data_diff = []
+            #for i in range(len(data_buf)-1):		# Iterate from 0 to 50
+            #    data_diff.append(data_buf[i+1] - data_buf[i])
 
-            inputs = scaler.transform(data_diff)	# data_diff should have 50 data
+            # print data_buf.shape
+            inputs = scaler.transform(data_buf)	# data_diff should have 50 data
             test = []
-            for i in range(10):
+            for i in range(1,11):
                 test.append(np.hstack(inputs[i:i+m_input_size]))
-
-            label = mode(clf.predict(test))[0][0]	# take the mode of 10 predictions
+            test = np.array(test)
+            # print test.shape
+            label = mode(clf.predict(test))	# take the mode of 10 predictions
+            #label = clf.predict(test)
+            print(np.array(label))
+            label = label[0][0]
             print(label)
             data_buf = []
 
@@ -156,12 +166,15 @@ if __name__ == '__main__':
 
         # print("cycle done")
         # Done one iteration
-
-        if SERVER_EXIST and label != 0:
+        if SERVER_EXIST and counter >= 40:
+            message = my_client.logoutMessage()
+            encrypted = my_client.encrypt(message)
+            my_client.sock.send(encrypted)
+        elif SERVER_EXIST and label != 0:
+            counter += 1
             print("Sending")
             message = my_client.formatMessage(power_buf[len(power_buf) - 1], label, cumulative_power)
             encrypted = my_client.encrypt(message)
             my_client.sock.send(encrypted)
 
-        time.sleep(5.0)
-
+        time.sleep(5)

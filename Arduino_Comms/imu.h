@@ -5,9 +5,9 @@
 #ifndef IMU_H
 #define IMU_H
 
-#define MPU_EN_ARM_L 47
-#define MPU_EN_ARM_R 41
-#define MPU_EN_TORSO 33 
+#define MPU_EN_ARM_L 10
+#define MPU_EN_ARM_R 9
+#define MPU_EN_TORSO 8
 
 // Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
 // is used in I2Cdev.h

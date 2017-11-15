@@ -17,8 +17,7 @@ class client:
         print('Connecting to %s port %s' % server_address)
         self.sock.connect((ip_addr, port_num))        
         self.actions = ['None', 'wavehands', 'busdriver', 'frontback', 'sidestep', 'jumping', 'jumpingjack', 
-                        'squatturnclap', 'turnclap', 'windowcleaner360',
-                        'windowcleaning']
+                        'turnclap', 'squatturnclap', 'windowcleaning', 'windowcleaner360', 'logout']
         print('Connected')
         
 
@@ -31,6 +30,11 @@ class client:
         IV = Random.new().read(BLOCK_SIZE)
         cipher = AES.new(self.getKey(), AES.MODE_CBC, IV)
         return base64.b64encode(IV + cipher.encrypt(message))
+
+    def logoutMessage(self):
+        message = '#logout|0|0|0|0'
+        return message.encode('utf8')
+
 
     # TODO
     def formatMessage(self, power, label, cum_power_reading):
@@ -102,4 +106,4 @@ if __name__ == '__main__':
         message = my_client.getDummyMessage()
         encrypted = my_client.encrypt(message)
         my_client.sock.send(encrypted)
-        time.sleep(3)
+        time.sleep(1)

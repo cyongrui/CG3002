@@ -44,7 +44,9 @@ void readImu(uint8_t pin, Sensor *s) {
     accelgyro.setZGyroOffset(101);
   }
   accelgyro.getMotion6(&(s->accelX), &(s->accelY), &(s->accelZ), &(s->row0), &(s->row1), &(s->row2));
-
+//  if((s->accelX == 0) && (s->accelY == 0) && (s->accelZ == 0)){ 
+//      initialize(pin);
+//  }
 }
 
 void setup_imu() {
